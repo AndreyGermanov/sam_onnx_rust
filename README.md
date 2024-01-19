@@ -4,6 +4,12 @@ This Web Application demonstrates how to use Segment Anything neural network mod
 
 This repository includes small Mobile SAM model files, exported to ONNX: `vit_t_encoder.onnx` and `vit_t_decoder.onnx`. I can't upload bigger files to GitHub, so if you want to use bigger SAM models to get better accuracy, read my article [Export Segment Anything neural network to ONNX: the missing parts](https://dev.to/andreygermanov/export-segment-anything-neural-network-to-onnx-the-missing-parts-43c8) to learn how to export different models and download [Jupyter Notebook](https://github.com/AndreyGermanov/sam_onnx_full_export/blob/main/sam_onnx_export.ipynb) to run this procedure.
 
+## Demo
+
+<div align="center">
+![Demo](https://raw.githubusercontent.com/AndreyGermanov/sam_onnx_rust/main/demo.gif)
+</div>
+
 ## Install
 
 * Clone this repository: `git clone git@github.com:AndreyGermanov/sam_onnx_rust.git`

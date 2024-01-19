@@ -1,10 +1,10 @@
 use std::sync::{Arc, Mutex};
 use std::path::Path;
-use image::{GenericImage, GenericImageView, Rgba};
+use image::{GenericImageView};
 use image::imageops::FilterType;
-use ndarray::{Array, ArrayBase, AssignElem, IxDyn};
+use ndarray::{Array, ArrayBase, IxDyn};
 use ort::{Environment, Session, SessionBuilder, Value};
-use rocket::{response::content, fs::TempFile, form::Form, error, State};
+use rocket::{response::content, fs::TempFile, form::Form, State};
 use rocket::http::Status;
 
 #[macro_use] extern crate rocket;
