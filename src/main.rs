@@ -21,16 +21,16 @@ struct AppState {
 }
 
 // Main function that defines
-// a web service endpoints a starts
+// a web service endpoints and starts
 // the web service
 #[rocket::main]
 async fn main() {
-    // Load ONNX models for Mobile SAM encoder and decoder and store it to the Web Application state
+    // Loads ONNX models for Mobile SAM encoder and decoder and stores them to the Web Application state
     let env = Arc::new(Environment::builder().with_name("SAM").build().unwrap());
     let encoder = SessionBuilder::new(&env).unwrap().with_model_from_file("vit_t_encoder.onnx").unwrap();
     let decoder = SessionBuilder::new(&env).unwrap().with_model_from_file("vit_t_decoder.onnx").unwrap();
 
-    // Start Rocket web server, bind state and endpoints to it
+    // Starts Rocket web server, binds state and endpoints to it
     rocket::build()
         .manage(AppState {
             image_embeddings: Mutex::new(ArrayBase::zeros((1, 256, 64, 64)).into_dyn()),
@@ -88,7 +88,7 @@ struct Coords {
 // then builds SAM prompt from it, and, using previously
 // stored image embeddings and information about image size,
 // runs the SAM decoder model to get segmentation mask.
-// returns segmentation mask as a flat array in which "0" are
+// Returns segmentation mask as a flat array in which "0" are
 // background pixels and "1" are foreground pixels.
 fn decode(coords: Option<Form<Coords>>, state: &State<AppState>) -> String {
     let coords = coords.unwrap();
@@ -104,12 +104,13 @@ fn get_image_embeddings(buf: Vec<u8>, encoder: &Session) -> Option<(Array<f32,Ix
     // Load and encode the input image to (1,3,1024,1024) tensor
     let img = image::load_from_memory(&buf).ok()?;
 
-    // Resize the image and preserve original size.
+    // Resize the image and save original size.
     let (orig_width, orig_height) = (img.width() as f32, img.height() as f32);
     let img_resized = img.resize(1024, 1024, FilterType::CatmullRom);
     let (resized_width, resized_height) = (img_resized.width() as f32, img_resized.height() as f32);
 
-    // Copy the image pixels to the tensor, normalizing them using "mean" and "std" deviation
+    // Copy the image pixels to the tensor, normalizing them using mean and standard deviations
+    // for each color channel
     let mut input = Array::zeros((1, 3, 1024, 1024)).into_dyn();
     let mean = vec![123.675, 116.28, 103.53];
     let std = vec![58.395, 57.12, 57.375];
