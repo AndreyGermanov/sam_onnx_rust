@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Segment Anything ONNX inference</title>
+    <style>
+        div {
+            width: 10px;
+            height: 10px;
+            border: 1px solid black;
+            background-color: red;
+            position: absolute;
+            border-radius: 100%;
+        }
+    </style>
+</head>
+<body>
+<h3>Segment Anything ONNX Demo</h3>
+1. Upload an image<br/>
+2. Click on top left and then on bottom right corners of an object that you want to segment from the image<br/>
+3. See the extracted object below the image<br/><br/>
+<input id="uploadInput" type="file"/><br/><br/>
+<img id="sourceImage" alt="Source image" src=""/><br/><br/>
+<canvas id="destCanvas"></canvas>
+<script>
+    const input = document.getElementById("uploadInput");
+    const img = document.getElementById("sourceImage");
+
+    // Upload image file and send it to backend
+    // to encode image embeddings for it using SAM encoder
+    input.addEventListener("change", async (event) => {
+        const data = new FormData();
+        data.append("image_file", event.target.files[0], "image_file");
+        await fetch("/encode", {method: "post", body: data});
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            img.src = reader.result;
+        }
+        reader.readAsDataURL(event.target.files[0]);
+    })
+
+    let box = [];
+    // Add top left and bottom right corners of the box
+    // and send these coordinates to the SAM decoder as a prompt
+    // to get a segmentation mask of an object, located in this
+    // box
+    img.addEventListener("click", async (event) => {
+        let [x, y] = [event.pageX - event.target.offsetLeft, event.pageY - event.target.offsetTop];
+        box.push(x, y);
+        const div = document.createElement("div");
+        div.classList.add("point");
+        div.style.left = (x + 2 ) + "px";
+        div.style.top = (y - 6 + event.target.offsetTop) + "px";
+        document.body.appendChild(div);
+        if (box.length === 4) {
+            if (box[0] > box[2]) {
+                [box[0], box[2]] = [box[2], box[0]];
+            }
+            if (box[1] > box[3]) {
+                [box[1], box[3]] = [box[3], box[1]];
+            }
+            const data = new FormData();
+            data.append("x1", box[0]);
+            data.append("y1", box[1]);
+            data.append("x2", box[2]);
+            data.append("y2", box[3]);
+            const response = await fetch("/decode", {method: "post", body: data});
+            document.querySelectorAll(".point").forEach(item => item.parentNode.removeChild(item));
+            const mask = await response.json();
+            // and draw this object below the image
+            extract_object_by_mask(box, mask)
+            box = []
+        }
+    });
+
+    // apply segmentation "mask" to the image: make all
+    // pixels with 0 color value transparent
+    // and then extract the "box" with object on it
+    // and display it below the image on the canvas.
+    function extract_object_by_mask(box, mask) {
+        const [x1, y1, x2, y2] = box;
+        const srcCanvas = document.createElement("canvas");
+        const img = document.getElementById("sourceImage")
+        srcCanvas.width = img.width;
+        srcCanvas.height = img.height;
+        const ctx = srcCanvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, srcCanvas.width, srcCanvas.height, 0, 0, srcCanvas.width, srcCanvas.height);
+        const imgData = ctx.getImageData(0, 0, srcCanvas.width, srcCanvas.height);
+        for (let index = 0; index < mask.length; index++) {
+            imgData.data[index * 4 + 3] = mask[index] > 0 ? 255 : 0;
+        }
+        ctx.putImageData(imgData, 0, 0);
+        const destCanvas = document.getElementById("destCanvas");
+        destCanvas.width = x2 - x1;
+        destCanvas.height = y2 - y1;
+        const destCtx = destCanvas.getContext("2d");
+        destCtx.drawImage(srcCanvas, x1, y1, x2 - x1, y2 - y1, 0, 0, x2 - x1, y2 - y1);
+    }
+</script>
+
+</body>
+</html>
