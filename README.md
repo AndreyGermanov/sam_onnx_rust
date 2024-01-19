@@ -6,9 +6,7 @@ This repository includes small Mobile SAM model files, exported to ONNX: `vit_t_
 
 ## Demo
 
-<div align="center">
 ![Demo](https://raw.githubusercontent.com/AndreyGermanov/sam_onnx_rust/main/demo.gif)
-</div>
 
 ## Install
 
